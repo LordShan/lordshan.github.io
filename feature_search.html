@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск по JSON (GZIP)</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background-color: white; padding: 20px; border-radius: 8px; text-align: center;
+        }
+        .loader {
+            border: 6px solid #f3f3f3; 
+            border-top: 6px solid #3498db; 
+            border-radius: 50%; 
+            width: 40px; height: 40px; 
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <h1>Поиск по JSON (GZIP)</h1>
+    <input type="text" id="searchInput" placeholder="Введите ID (например: 2)">
+    <button onclick="searchData()">Поиск</button>
+    
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Тип</th>
+                <th>Обязательное</th>
+                <th>Единица измерения</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Модальное окно загрузки (ПРИ ПОИСКЕ) -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <p>Поиск данных...</p>
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <script>
+        let jsonData = {}; // Данные из JSON
+
+        // Функция загрузки JSON с сервера (БЕЗ ПОКАЗА МОДАЛЬНОГО ОКНА)
+        async function loadGzipJSON(url) {
+            try {
+                showLoading();
+                const response = await fetch(url);
+                const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
+                const text = await new Response(decompressedStream).text();
+                jsonData = JSON.parse(text);
+                console.log("JSON загружен", jsonData);
+                hideLoading();
+            } catch (error) {
+                console.error("Ошибка загрузки JSON:", error);
+                hideLoading();
+            }
+        }
+
+        // Функция поиска по ID
+        async function searchData() {
+            const searchID = document.getElementById("searchInput").value.trim();
+            const tableBody = document.querySelector("#resultTable tbody");
+            tableBody.innerHTML = "";
+            showLoading(); // Показываем модальное окно ТОЛЬКО при поиске
+
+            setTimeout(() => {
+                if (!jsonData[searchID]) {
+                    tableBody.innerHTML = "<tr><td colspan='5'>Ничего не найдено</td></tr>";
+                } else {
+                    const results = jsonData[searchID];
+                    Object.keys(results).forEach(key => {
+                        const item = results[key];
+                        const row = `<tr>
+                            <td>${key}</td>
+                            <td>${item.feature_name}</td>
+                            <td>${item.feature_type}</td>
+                            <td>${item.feature_mandatory === "1" ? "Да" : "Нет"}</td>
+                            <td>${item.feature_unit_sign || "-"}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                }
+                hideLoading(); // Скрываем модальное окно
+            }, 1000); // Имитация задержки
+        }
+
+        // Функции для показа/скрытия модального окна загрузки
+        function showLoading() { document.getElementById("loadingModal").style.display = "flex"; }
+        function hideLoading() { document.getElementById("loadingModal").style.display = "none"; }
+
+        // Загружаем JSON при старте (но БЕЗ ПОКАЗА окна загрузки)
+        loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
+    </script>
+</body>
+</html>
