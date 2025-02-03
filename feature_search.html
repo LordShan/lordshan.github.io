@@ -33,7 +33,7 @@
 </head>
 <body>
     <h1>Search features by category</h1>
-    <input type="text" id="searchInput" placeholder="Введите ID (например: 2)">
+    <input type="text" id="searchInput" placeholder="Enter ID category">
     <button onclick="searchData()">Search</button>
     
     <table id="resultTable">
@@ -51,7 +51,7 @@
 
     <div id="loadingModal" class="modal">
         <div class="modal-content">
-            <p>Поиск данных...</p>
+            <p>Upload/Search data</p>
             <div class="loader"></div>
         </div>
     </div>
@@ -82,7 +82,7 @@
 
             setTimeout(() => {
                 if (!jsonData[searchID]) {
-                    tableBody.innerHTML = "<tr><td colspan='5'>Ничего не найдено</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='5'>Not founded data</td></tr>";
                 } else {
                     const results = jsonData[searchID];
                     Object.keys(results).forEach(key => {
