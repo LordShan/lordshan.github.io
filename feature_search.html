@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск по JSON (GZIP)</title>
+    <title>Search features by category</title>
     <style>
         body { font-family: Arial, sans-serif; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -32,24 +32,23 @@
     </style>
 </head>
 <body>
-    <h1>Поиск по JSON (GZIP)</h1>
+    <h1>Search features by category</h1>
     <input type="text" id="searchInput" placeholder="Введите ID (например: 2)">
-    <button onclick="searchData()">Поиск</button>
+    <button onclick="searchData()">Search</button>
     
     <table id="resultTable">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Название</th>
-                <th>Тип</th>
-                <th>Обязательное</th>
-                <th>Единица измерения</th>
+                <th>Feature Name</th>
+                <th>Type</th>
+                <th>Mandatory</th>
+                <th>Units</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
-    <!-- Модальное окно загрузки (ПРИ ПОИСКЕ) -->
     <div id="loadingModal" class="modal">
         <div class="modal-content">
             <p>Поиск данных...</p>
@@ -58,9 +57,7 @@
     </div>
 
     <script>
-        let jsonData = {}; // Данные из JSON
-
-        // Функция загрузки JSON с сервера (БЕЗ ПОКАЗА МОДАЛЬНОГО ОКНА)
+        let jsonData = {}; 
         async function loadGzipJSON(url) {
             try {
                 showLoading();
@@ -68,20 +65,20 @@
                 const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
                 const text = await new Response(decompressedStream).text();
                 jsonData = JSON.parse(text);
-                console.log("JSON загружен", jsonData);
+                console.log("JSON loaded", jsonData);
                 hideLoading();
             } catch (error) {
-                console.error("Ошибка загрузки JSON:", error);
+                console.error("Bad loaded JSON:", error);
                 hideLoading();
             }
         }
 
-        // Функция поиска по ID
+
         async function searchData() {
             const searchID = document.getElementById("searchInput").value.trim();
             const tableBody = document.querySelector("#resultTable tbody");
             tableBody.innerHTML = "";
-            showLoading(); // Показываем модальное окно ТОЛЬКО при поиске
+            showLoading(); 
 
             setTimeout(() => {
                 if (!jsonData[searchID]) {
@@ -94,21 +91,19 @@
                             <td>${key}</td>
                             <td>${item.feature_name}</td>
                             <td>${item.feature_type}</td>
-                            <td>${item.feature_mandatory === "1" ? "Да" : "Нет"}</td>
+                            <td>${item.feature_mandatory === "1" ? "Yes" : "-"}</td>
                             <td>${item.feature_unit_sign || "-"}</td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
                 }
-                hideLoading(); // Скрываем модальное окно
-            }, 1000); // Имитация задержки
+                hideLoading(); 
+            }, 0);
         }
 
-        // Функции для показа/скрытия модального окна загрузки
         function showLoading() { document.getElementById("loadingModal").style.display = "flex"; }
         function hideLoading() { document.getElementById("loadingModal").style.display = "none"; }
 
-        // Загружаем JSON при старте (но БЕЗ ПОКАЗА окна загрузки)
         loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
     </script>
 </body>
