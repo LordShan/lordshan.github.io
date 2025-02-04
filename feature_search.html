@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FeatureSearch</title>
-    
+    <link rel="icon" type="image/svg+xml" href="logo.png">
     <style>
-        body { font-family: Arial, sans-serif; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        body { font-family: Arial, sans-serif;}
+        
         .modal {
             display: none; 
             position: fixed; 
             z-index: 1000; 
             left: 0; top: 0; width: 100%; height: 100%; 
             background-color: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
+            align-items: center; 
+            justify-content: center;
         }
         .modal-content {
-            background-color: white; padding: 20px; border-radius: 8px; text-align: center;
+            background-color: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center;
         }
         .loader {
             border: 6px solid #f3f3f3; 
@@ -30,27 +32,167 @@
             margin: 10px auto;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .button-search{
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 12px 25px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+        }
+        .button-search:hover{
+            background-color: #45a049;
+            color:#616161;
+            cursor: pointer;
+        }
+        .info-btn{
+            background-color: #3498db;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 6px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+        }
+        .info-btn:hover{
+            background-color: #2980b9;
+            color:#616161;
+            cursor: pointer;
+        }
+        .input-search{
+            width: 25%;
+            padding: 10px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border-radius:10px;
+            font-size: 16px;
+        }
+        .search-container{
+            text-align: center;
+            
+        }
+        h1{
+            color: #090dee;
+            text-align: center;
+            font-size: 25px;
+            padding: 10px 25px;
+            background-color: #d1d4f0;
+            border-radius:10px;
+        }
+        .table-container{
+            margin: 0 auto;
+            width: 85%;
+            border-collapse: collapse; 
+            margin-top: 10px;
+        }
+        .feature-table{
+            margin: 0 auto;
+            width: 85%;
+            border-collapse: collapse; 
+            margin-top: 10px;
+        }
+        .feature-table thead th{
+            background-color: #686fb4;
+            height: 30px;
+            text-align: center;
+            border: 1px solid rgb(255, 255, 255);
+        }
+        .feature-table tbody td{
+            border: 1px solid rgb(135, 178, 235);
+            padding: 8px;
+            text-align: center;
+        }
+        .not-found-data{
+            color:#eaee09;
+            background-color: #db5b34;
+            background-color: #beeea7ce;
+            font-size: 25px;
+        }
+        #infoModal{
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            max-width: 600px;
+            height: 50%;
+            max-height: 400px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            overflow: hidden; 
+        }
+        
+        .button-close{
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .infoTable {
+            margin: 0 auto;
+            width: 85%;
+            border-collapse: collapse; 
+            margin-top: 10px;
+        }
+        .infoTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .infoTable th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            background-color: #f2f2f2;
+        }
+
+        #infoModal div {
+            flex-grow: 1;
+            overflow-y: auto; 
+            max-height: calc(100% - 60px); 
+        }
+
     </style>
 </head>
 <body>
     <h1>Search features on category</h1>
-    <input type="text" id="searchInput" placeholder="Enter ID to search">
-    <button onclick="searchData()">Search</button>
+    <div class="search-container">
+        <input class="input-search" type="text" id="searchInput" placeholder="Enter ID to search">
+        <button class="button-search" onclick="searchData()">Search</button>
+    </div>
+    <div class="table-container">
+        <table id="resultTable" class="feature-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name Features</th>
+                    <th>Type</th>
+                    <th>Mandatory</th>
+                    <th>Units</th>
+                    <th>Info</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
     
-    <table id="resultTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name Features</th>
-                <th>Type</th>
-                <th>Mandatory</th>
-                <th>Units</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <!-- Модальное окно загрузки (ПРИ ПОИСКЕ) -->
     <div id="loadingModal" class="modal">
         <div class="modal-content">
             <p>Upload/Search data</p>
@@ -58,10 +200,24 @@
         </div>
     </div>
 
-    <script>
-        let jsonData = {}; // Данные из JSON
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <button class= "button-close" onclick="hideInfo()">Close</button>
+            <h2>Values for </h2>
+            <div class="info-container">
+                <table class = "infoTable">
+                    <thead>
+                    </thead>
+                    <tbody id="infoList"></tbody>
+            </div>
+        </div>
+    </div>
 
-        // Функция загрузки JSON с сервера (БЕЗ ПОКАЗА МОДАЛЬНОГО ОКНА)
+
+    <script>
+        let jsonData = {};
+        let restrictedData = {};
+
         async function loadGzipJSON(url) {
             try {
                 showLoading();
@@ -69,10 +225,24 @@
                 const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
                 const text = await new Response(decompressedStream).text();
                 jsonData = JSON.parse(text);
-                console.log("JSON загружен", jsonData);
+                console.log("Features JSON loaded", jsonData);
                 hideLoading();
             } catch (error) {
-                console.error("Ошибка загрузки JSON:", error);
+                console.error("Wrong load Features JSON:", error);
+                hideLoading();
+            }
+        }
+        async function loadGzipJSON_res(url) {
+            try {
+                showLoading();
+                const response = await fetch(url);
+                const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
+                const text = await new Response(decompressedStream).text();
+                restrictedData = JSON.parse(text);
+                console.log("Restricted JSON loaded", restrictedData);
+                hideLoading();
+            } catch (error) {
+                console.error("Wrong load Restricted JSON:", error);
                 hideLoading();
             }
         }
@@ -86,17 +256,19 @@
 
             setTimeout(() => {
                 if (!jsonData[searchID]) {
-                    tableBody.innerHTML = "<tr><td colspan='5'>Not Founded</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='6' class='not-found-data'>Nothing found for this ID " + [searchID] + "</td></tr>";
                 } else {
                     const results = jsonData[searchID];
                     Object.keys(results).forEach(key => {
                         const item = results[key];
-                        const row = `<tr>
+                        const isMandatory = item.feature_mandatory === "1"; // Проверяем, обязательный ли элемент
+                        const row = `<tr style="background-color: ${isMandatory ? '#beeea7ce' : 'transparent'};">
                             <td>${key}</td>
                             <td>${item.feature_name}</td>
                             <td>${item.feature_type}</td>
-                            <td>${item.feature_mandatory === "1" ? "Yes" : "-"}</td>
+                            <td>${isMandatory ? "Yes" : "-"}</td>
                             <td>${item.feature_unit_sign || "-"}</td>
+                            <td><button class="info-btn" onclick="showInfo('${key}', '${item.feature_name}')">Info</button></td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
@@ -105,12 +277,45 @@
             }, 1000); // Имитация задержки
         }
 
+        function showInfo(id, name_feature) {
+            console.log("Запрос информации для ID:", id);
+
+            const modalTitle = document.querySelector("#infoModal h2");
+            modalTitle.textContent = `Values for  ${name_feature} (${id})`;
+
+            const infoList = document.getElementById("infoList");
+            infoList.innerHTML = "";
+
+            if (restrictedData[id] && restrictedData[id].length > 0) {
+                restrictedData[id].forEach(item => {
+                    const row = document.createElement("tr");
+                    const cell = document.createElement("td");
+                    cell.textContent = item;
+                    row.appendChild(cell);
+                    infoList.appendChild(row);
+                });
+            } else {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.textContent = "There are no preset values ​​for this feature.";
+                row.appendChild(cell);
+                infoList.appendChild(row);
+            }
+            document.getElementById("infoModal").style.display = "flex";
+    }
+        // Закрытие модального окна информации
+        function hideInfo() {
+            document.getElementById("infoModal").style.display = "none";
+        }
         // Функции для показа/скрытия модального окна загрузки
         function showLoading() { document.getElementById("loadingModal").style.display = "flex"; }
         function hideLoading() { document.getElementById("loadingModal").style.display = "none"; }
 
         // Загружаем JSON при старте (но БЕЗ ПОКАЗА окна загрузки)
         loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
+        loadGzipJSON_res("https://lordshan.github.io/restricted_values.json.gz");
+        // hideLoading();
+
     </script>
 </body>
 </html>
