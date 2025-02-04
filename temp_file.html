@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск по JSON (GZIP)</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        
+        /* Модальное окно (скрыто по умолчанию) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center; justify-content: center;
+        }
+
+        /* Контент окна */
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 250px;
+        }
+
+        /* Индикатор загрузки */
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Кнопки */
+        .info-btn {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .info-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Поиск по JSON (GZIP)</h1>
+    <input type="text" id="searchInput" placeholder="Введите ID (например: 2)">
+    <button onclick="searchData()">Поиск</button>
+    
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Тип</th>
+                <th>Обязательное</th>
+                <th>Единица измерения</th>
+                <th>Детали</th> <!-- Новая колонка с кнопками -->
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Модальное окно загрузки -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <p>Загрузка...</p>
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно информации -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <h2>Дополнительная информация</h2>
+            <ul id="infoList"></ul>
+            <button onclick="hideInfo()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        let jsonData = {};  // Основной JSON (features_list.json.gz)
+        let additionalData = {}; // Второй JSON (список значений)
+
+        // Функция загрузки JSON с сервера
+        async function loadGzipJSON(url) {
+            try {
+                console.log("Загрузка JSON:", url);
+                const response = await fetch(url);
+                const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
+                const text = await new Response(decompressedStream).text();
+                return JSON.parse(text);
+            } catch (error) {
+                console.error("Ошибка загрузки JSON:", error);
+                return {};
+            }
+        }
+
+        // Загрузка обоих JSON при старте
+        async function loadData() {
+            jsonData = await loadGzipJSON("https://useruser.github.io/features_list.json.gz");
+            additionalData = await loadGzipJSON("https://useruser.github.io/additional_data.json.gz");
+            console.log("Данные загружены", { jsonData, additionalData });
+        }
+
+        // Функция поиска
+        async function searchData() {
+            const searchID = document.getElementById("searchInput").value.trim();
+            const tableBody = document.querySelector("#resultTable tbody");
+            tableBody.innerHTML = "";
+
+            console.log("Поиск по ID:", searchID);
+            showLoading(); // Показываем окно загрузки
+
+            setTimeout(() => {
+                if (!jsonData[searchID]) {
+                    tableBody.innerHTML = "<tr><td colspan='6'>Ничего не найдено</td></tr>";
+                } else {
+                    const results = jsonData[searchID];
+                    Object.keys(results).forEach(key => {
+                        const item = results[key];
+                        const row = `<tr>
+                            <td>${key}</td>
+                            <td>${item.feature_name}</td>
+                            <td>${item.feature_type}</td>
+                            <td>${item.feature_mandatory === "1" ? "Да" : "Нет"}</td>
+                            <td>${item.feature_unit_sign || "-"}</td>
+                            <td><button class="info-btn" onclick="showInfo('${key}')">Info</button></td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                }
+                hideLoading(); // Закрываем окно загрузки
+            }, 1000); // Имитация задержки
+        }
+
+        // Функция отображения информации из второго JSON
+        function showInfo(id) {
+            console.log("Запрос информации для ID:", id);
+            const infoList = document.getElementById("infoList");
+            infoList.innerHTML = "";
+
+            if (additionalData[id] && additionalData[id].length > 0) {
+                additionalData[id].forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    infoList.appendChild(li);
+                });
+            } else {
+                infoList.innerHTML = "<li>Нет данных</li>";
+            }
+
+            document.getElementById("infoModal").style.display = "flex";
+        }
+
+        // Закрытие модального окна информации
+        function hideInfo() {
+            document.getElementById("infoModal").style.display = "none";
+        }
+
+        // Показ модального окна загрузки
+        function showLoading() {
+            document.getElementById("loadingModal").style.display = "flex";
+        }
+
+        // Скрытие модального окна загрузки
+        function hideLoading() {
+            document.getElementById("loadingModal").style.display = "none";
+        }
+
+        // Загружаем JSON при старте
+        loadData();
+    </script>
+</body>
+</html>

@@ -18,7 +18,11 @@
             display: flex; align-items: center; justify-content: center;
         }
         .modal-content {
-            background-color: white; padding: 20px; border-radius: 8px; text-align: center;
+            background-color: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center;
+            min-width: 250px;
         }
         .loader {
             border: 6px solid #f3f3f3; 
@@ -29,6 +33,18 @@
             margin: 10px auto;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .info-btn {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .info-btn:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +60,7 @@
                 <th>Type</th>
                 <th>Mandatory</th>
                 <th>Units</th>
+                <th>Info</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -56,22 +73,38 @@
         </div>
     </div>
 
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <h2>Дополнительная информация</h2>
+            <ul id="infoList"></ul>
+            <button onclick="hideInfo()">Закрыть</button>
+        </div>
+    </div>
+
     <script>
         let jsonData = {}; 
+        let additionalData = {};
         async function loadGzipJSON(url) {
             try {
-                showLoading();
                 const response = await fetch(url);
                 const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
                 const text = await new Response(decompressedStream).text();
                 jsonData = JSON.parse(text);
                 console.log("JSON loaded", jsonData);
-                hideLoading();
+                
             } catch (error) {
                 console.error("Bad loaded JSON:", error);
                 hideLoading();
             }
         }
+        async function loadData() {
+            showLoading();
+            jsonData = await loadGzipJSON("https://useruser.github.io/features_list.json.gz");
+            additionalData = await loadGzipJSON("https://useruser.github.io/restricted_values.json.gz");
+            console.log("Данные загружены", { jsonData, additionalData });
+            hideLoading();
+        }
+
 
 
         async function searchData() {
@@ -93,6 +126,7 @@
                             <td>${item.feature_type}</td>
                             <td>${item.feature_mandatory === "1" ? "Yes" : "-"}</td>
                             <td>${item.feature_unit_sign || "-"}</td>
+                            <td><button class="info-btn" onclick="showInfo('${key}')">Info</button></td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
@@ -101,10 +135,30 @@
             }, 0);
         }
 
+        // Функция отображения информации из второго JSON
+        function showInfo(id) {
+            console.log("Check info for ID:", id);
+            const infoList = document.getElementById("infoList");
+            infoList.innerHTML = "";
+
+            if (additionalData[id] && additionalData[id].length > 0) {
+                additionalData[id].forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    infoList.appendChild(li);
+                });
+            } else {
+                infoList.innerHTML = "<li>Not founds data</li>";
+            }
+            document.getElementById("infoModal").style.display = "flex";
+        }
+
+        function hideInfo() {
+            document.getElementById("infoModal").style.display = "none";
+        }
         function showLoading() { document.getElementById("loadingModal").style.display = "flex"; }
         function hideLoading() { document.getElementById("loadingModal").style.display = "none"; }
-
-        loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
+        loadData();
     </script>
 </body>
 </html>
