@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search features by category</title>
+    <title>FeatureSearch</title>
+    
     <style>
         body { font-family: Arial, sans-serif; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -18,11 +19,7 @@
             display: flex; align-items: center; justify-content: center;
         }
         .modal-content {
-            background-color: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            text-align: center;
-            min-width: 250px;
+            background-color: white; padding: 20px; border-radius: 8px; text-align: center;
         }
         .loader {
             border: 6px solid #f3f3f3; 
@@ -33,39 +30,27 @@
             margin: 10px auto;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .info-btn {
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .info-btn:hover {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
-    <h1>Search features by category</h1>
-    <input type="text" id="searchInput" placeholder="Enter ID category">
+    <h1>Search features on category</h1>
+    <input type="text" id="searchInput" placeholder="Enter ID to search">
     <button onclick="searchData()">Search</button>
     
     <table id="resultTable">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Feature Name</th>
+                <th>Name Features</th>
                 <th>Type</th>
                 <th>Mandatory</th>
                 <th>Units</th>
-                <th>Info</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
+    <!-- Модальное окно загрузки (ПРИ ПОИСКЕ) -->
     <div id="loadingModal" class="modal">
         <div class="modal-content">
             <p>Upload/Search data</p>
@@ -73,49 +58,35 @@
         </div>
     </div>
 
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <h2>Дополнительная информация</h2>
-            <ul id="infoList"></ul>
-            <button onclick="hideInfo()">Закрыть</button>
-        </div>
-    </div>
-
     <script>
-        let jsonData = {}; 
-        let additionalData = {};
+        let jsonData = {}; // Данные из JSON
+
+        // Функция загрузки JSON с сервера (БЕЗ ПОКАЗА МОДАЛЬНОГО ОКНА)
         async function loadGzipJSON(url) {
             try {
+                showLoading();
                 const response = await fetch(url);
                 const decompressedStream = response.body.pipeThrough(new DecompressionStream("gzip"));
                 const text = await new Response(decompressedStream).text();
                 jsonData = JSON.parse(text);
-                console.log("JSON loaded", jsonData);
-                
+                console.log("JSON загружен", jsonData);
+                hideLoading();
             } catch (error) {
-                console.error("Bad loaded JSON:", error);
+                console.error("Ошибка загрузки JSON:", error);
                 hideLoading();
             }
         }
-        async function loadData() {
-            showLoading();
-            jsonData = await loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
-            additionalData = await loadGzipJSON("https://lordshan.github.io/restricted_values.json.gz");
-            console.log("Данные загружены", { jsonData, additionalData });
-            hideLoading();
-        }
 
-
-
+        // Функция поиска по ID
         async function searchData() {
             const searchID = document.getElementById("searchInput").value.trim();
             const tableBody = document.querySelector("#resultTable tbody");
             tableBody.innerHTML = "";
-            showLoading(); 
+            showLoading(); // Показываем модальное окно ТОЛЬКО при поиске
 
             setTimeout(() => {
                 if (!jsonData[searchID]) {
-                    tableBody.innerHTML = "<tr><td colspan='5'>Not founded data</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='5'>Not Founded</td></tr>";
                 } else {
                     const results = jsonData[searchID];
                     Object.keys(results).forEach(key => {
@@ -126,39 +97,20 @@
                             <td>${item.feature_type}</td>
                             <td>${item.feature_mandatory === "1" ? "Yes" : "-"}</td>
                             <td>${item.feature_unit_sign || "-"}</td>
-                            <td><button class="info-btn" onclick="showInfo('${key}')">Info</button></td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
                 }
-                hideLoading(); 
-            }, 0);
+                hideLoading(); // Скрываем модальное окно
+            }, 1000); // Имитация задержки
         }
 
-        // Функция отображения информации из второго JSON
-        function showInfo(id) {
-            console.log("Check info for ID:", id);
-            const infoList = document.getElementById("infoList");
-            infoList.innerHTML = "";
-
-            if (additionalData[id] && additionalData[id].length > 0) {
-                additionalData[id].forEach(item => {
-                    const li = document.createElement("li");
-                    li.textContent = item;
-                    infoList.appendChild(li);
-                });
-            } else {
-                infoList.innerHTML = "<li>Not founds data</li>";
-            }
-            document.getElementById("infoModal").style.display = "flex";
-        }
-
-        function hideInfo() {
-            document.getElementById("infoModal").style.display = "none";
-        }
+        // Функции для показа/скрытия модального окна загрузки
         function showLoading() { document.getElementById("loadingModal").style.display = "flex"; }
         function hideLoading() { document.getElementById("loadingModal").style.display = "none"; }
-        loadData();
+
+        // Загружаем JSON при старте (но БЕЗ ПОКАЗА окна загрузки)
+        loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
     </script>
 </body>
 </html>
