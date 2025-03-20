@@ -270,7 +270,7 @@
                             <td>${isMandatory ? "Yes" : "-"}</td>
                             <td>${item.feature_unit_sign || "-"}</td>
                             <td>${item.feature_group_name}</td>
-                            <td><button class="info-btn" onclick="showInfo('${key}', '${item.feature_name}')">Info</button></td>
+                            // <td><button class="info-btn" onclick="showInfo('${key}', '${item.feature_name}')">Info</button></td>
                         </tr>`;
                         tableBody.innerHTML += row;
                     });
@@ -315,7 +315,7 @@
 
         // Загружаем JSON при старте (но БЕЗ ПОКАЗА окна загрузки)
         loadGzipJSON("https://lordshan.github.io/features_list.json.gz");
-        loadGzipJSON_res("https://lordshan.github.io/restricted_values.json.gz");
+        // loadGzipJSON_res("https://lordshan.github.io/restricted_values.json.gz");
         // hideLoading();
 
     </script>
