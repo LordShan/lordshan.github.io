@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMD Processor Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        #searchInput {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        button {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #6a0dad;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            display: none;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        tr.context-match {
+            background-color: #fff3cd;
+        }
+        tr.context-match:hover {
+            background-color: #ffe8a1;
+        }
+        .no-results {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #777;
+            display: none;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .highlight {
+            background-color: #ffeb99;
+            padding: 2px 0;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            .search-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AMD Processor Specifications</h1>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search by Name, Series, or Family...">
+            <button id="searchButton">Search</button>
+        </div>
+        
+        <div class="search-info">
+            Search only looks in Name, Series, and Family fields
+        </div>
+        
+        <div id="noResults" class="no-results">No matching processor found.</div>
+        
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Table data will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+
+        // In a real implementation, you would load the JSON from a file like this:
+        async function loadJSON() {
+            try {
+                const response = await fetch('data_processors.json');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error loading JSON:', error);
+                return null;
+            }
+        }
+        
+
+        // List of essential fields to always display after search
+        const essentialFields = [
+            "Name",
+            "Series",
+            "# of CPU Cores",
+            "# of Threads",
+            "Base Clock",
+            "Max. Boost Clock",
+            "L2 Cache",
+            "L3 Cache",
+            "url"
+        ];
+
+        // Context search fields - search will ONLY look in these fields
+        const contextSearchFields = [
+            "Name",
+            "Series",
+            "Family"
+        ];
+
+        function populateTable(data, searchTerm = '') {
+            const tableBody = document.getElementById('tableBody');
+            const table = document.getElementById('dataTable');
+            const noResults = document.getElementById('noResults');
+            
+            // Clear previous results
+            tableBody.innerHTML = '';
+            
+            // Convert search term to lowercase for case-insensitive matching
+            const searchTermLower = searchTerm.toLowerCase();
+            
+            // Check if any of the context fields match the search
+            let contextMatch = false;
+            let contextMatchData = null;
+            
+            if (searchTerm) {
+                // Only search in the context fields
+                for (const field of contextSearchFields) {
+                    if (data[field] && data[field].toLowerCase().includes(searchTermLower)) {
+                        contextMatch = true;
+                        contextMatchData = field;
+                        break;
+                    }
+                }
+            }
+            
+            // If no context match and we're searching, show no results
+            if (searchTerm && !contextMatch) {
+                table.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            // If we're not searching or we found a match, display all essential fields
+            if (!searchTerm || contextMatch) {
+                // Display all fields
+                for (const [key, value] of Object.entries(data)) {
+                    if (!value) continue; // Skip empty values
+                    
+                    const row = document.createElement('tr');
+                    
+                    // Highlight the matching context field
+                    if (contextMatch && key === contextMatchData) {
+                        row.classList.add('context-match');
+                    }
+                    
+                    // Add special styling for essential fields
+                    if (essentialFields.includes(key)) {
+                        row.classList.add('essential');
+                    }
+                    
+                    const keyCell = document.createElement('td');
+                    const valueCell = document.createElement('td');
+                    
+                    keyCell.textContent = key;
+                    
+                    // Highlight the matching text in the value if it's in a context field
+                    if (contextMatch && key === contextMatchData && value) {
+                        const highlightedValue = value.toString().replace(
+                            new RegExp(searchTerm, 'gi'),
+                            match => `<span class="highlight">${match}</span>`
+                        );
+                        valueCell.innerHTML = highlightedValue;
+                    } else {
+                        valueCell.textContent = value;
+                    }
+                    
+                    row.appendChild(keyCell);
+                    row.appendChild(valueCell);
+                    tableBody.appendChild(row);
+                }
+                
+                table.style.display = 'table';
+                noResults.style.display = 'none';
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchButton = document.getElementById('searchButton');
+            const searchInput = document.getElementById('searchInput');
+            
+            // Search button click
+            searchButton.addEventListener('click', function() {
+                const searchTerm = searchInput.value.trim();
+                populateTable(jsonData, searchTerm);
+            });
+            
+            // Enter key press in search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const searchTerm = searchInput.value.trim();
+                    populateTable(jsonData, searchTerm);
+                }
+            });
+            
+            // Clear search results when input is cleared
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    document.getElementById('dataTable').style.display = 'none';
+                    document.getElementById('noResults').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
