@@ -43,6 +43,11 @@
             margin-bottom: 20px;
             font-style: italic;
         }
+        .results-count {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #4b0082;
+        }
         button {
             background-color: #4b0082;
             color: white;
@@ -60,7 +65,6 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            display: none;
         }
         th, td {
             padding: 12px 15px;
@@ -79,6 +83,17 @@
         }
         tr.context-match:hover {
             background-color: #ffe8a1;
+        }
+        .processor-header {
+            background-color: #4b0082;
+            color: white;
+            padding: 10px 15px;
+            margin-top: 30px;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+        .processor-header:first-of-type {
+            margin-top: 0;
         }
         .no-results {
             text-align: center;
@@ -119,39 +134,31 @@
             Search only looks in Name, Series, and Family fields
         </div>
         
-        <div id="noResults" class="no-results">No matching processor found.</div>
+        <div id="resultsCount" class="results-count" style="display: none;"></div>
+        <div id="noResults" class="no-results">No matching processors found.</div>
         
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Table data will be inserted here by JavaScript -->
-            </tbody>
-        </table>
+        <div id="resultsContainer">
+            <!-- Processor data will be inserted here by JavaScript -->
+        </div>
     </div>
 
     <script>
-        const jsonData = loadJSON();
+        // Sample data - in a real implementation, this would be loaded from a file
+        const jsonData = loadJSON()
         
-        async function loadJSON() {
+            async function loadJSON() {
             try {
-                const response = await fetch('data_processors.json');
+                const response = await fetch('data.json');
                 const data = await response.json();
-                console.log("JSON load is Done!!!")
                 return data;
             } catch (error) {
                 console.error('Error loading JSON:', error);
-                return null;
+                return [];
             }
         }
         
-
-        // List of essential fields to always display after search
-        const essentialFields = [
+        // List of fields to display in the results
+        const displayFields = [
             "Name",
             "Series",
             "# of CPU Cores",
@@ -170,84 +177,107 @@
             "Family"
         ];
 
-        function populateTable(data, searchTerm = '') {
-            const tableBody = document.getElementById('tableBody');
-            const table = document.getElementById('dataTable');
-            const noResults = document.getElementById('noResults');
-            
-            // Clear previous results
-            tableBody.innerHTML = '';
+        function createProcessorTable(processor, searchTerm = '') {
+            // Create table for a single processor
+            const table = document.createElement('table');
+            const tableBody = document.createElement('tbody');
             
             // Convert search term to lowercase for case-insensitive matching
             const searchTermLower = searchTerm.toLowerCase();
             
-            // Check if any of the context fields match the search
-            let contextMatch = false;
-            let contextMatchData = null;
-            
-            if (searchTerm) {
-                // Only search in the context fields
-                console.log(searchTerm);
-                console.log(data);
-
-                for (const field of contextSearchFields) {
-                    if (data[field] && data[field].toLowerCase().includes(searchTermLower)) {
-                        contextMatch = true;
-                        contextMatchData = field;
-                        break;
-                    }
+            // Add only the specified fields
+            displayFields.forEach(key => {
+                if (!processor[key]) return; // Skip empty values
+                
+                const row = document.createElement('tr');
+                
+                // Check if this is a context field with a match
+                const isContextField = contextSearchFields.includes(key);
+                const hasMatch = isContextField && processor[key].toString().toLowerCase().includes(searchTermLower);
+                
+                if (hasMatch) {
+                    row.classList.add('context-match');
                 }
-            }
+                
+                const keyCell = document.createElement('td');
+                const valueCell = document.createElement('td');
+                
+                keyCell.textContent = key;
+                
+                // Highlight the matching text if it's in a context field
+                if (hasMatch) {
+                    const highlightedValue = processor[key].toString().replace(
+                        new RegExp(searchTerm, 'gi'),
+                        match => `<span class="highlight">${match}</span>`
+                    );
+                    valueCell.innerHTML = highlightedValue;
+                } else {
+                    valueCell.textContent = processor[key];
+                }
+                
+                row.appendChild(keyCell);
+                row.appendChild(valueCell);
+                tableBody.appendChild(row);
+            });
             
-            // If no context match and we're searching, show no results
-            if (searchTerm && !contextMatch) {
-                table.style.display = 'none';
-                noResults.style.display = 'block';
+            table.appendChild(tableBody);
+            return table;
+        }
+
+        function searchProcessors(data, searchTerm = '') {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const noResults = document.getElementById('noResults');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+            
+            // If no search term, hide everything and return
+            if (!searchTerm) {
+                noResults.style.display = 'none';
+                resultsCount.style.display = 'none';
                 return;
             }
             
-            // If we're not searching or we found a match, display all essential fields
-            if (!searchTerm || contextMatch) {
-                // Display all fields
-                for (const [key, value] of Object.entries(data)) {
-                    if (!value) continue; // Skip empty values
-                    
-                    const row = document.createElement('tr');
-                    
-                    // Highlight the matching context field
-                    if (contextMatch && key === contextMatchData) {
-                        row.classList.add('context-match');
+            // Convert search term to lowercase for case-insensitive matching
+            const searchTermLower = searchTerm.toLowerCase();
+            
+            // Filter processors that match the search term in any context field
+            const matchingProcessors = data.filter(processor => {
+                for (const field of contextSearchFields) {
+                    if (processor[field] && processor[field].toString().toLowerCase().includes(searchTermLower)) {
+                        return true;
                     }
-                    
-                    // Add special styling for essential fields
-                    if (essentialFields.includes(key)) {
-                        row.classList.add('essential');
-                    }
-                    
-                    const keyCell = document.createElement('td');
-                    const valueCell = document.createElement('td');
-                    
-                    keyCell.textContent = key;
-                    
-                    // Highlight the matching text in the value if it's in a context field
-                    if (contextMatch && key === contextMatchData && value) {
-                        const highlightedValue = value.toString().replace(
-                            new RegExp(searchTerm, 'gi'),
-                            match => `<span class="highlight">${match}</span>`
-                        );
-                        valueCell.innerHTML = highlightedValue;
-                    } else {
-                        valueCell.textContent = value;
-                    }
-                    
-                    row.appendChild(keyCell);
-                    row.appendChild(valueCell);
-                    tableBody.appendChild(row);
                 }
-                
-                table.style.display = 'table';
-                noResults.style.display = 'none';
+                return false;
+            });
+            
+            // If no matches, show no results message
+            if (matchingProcessors.length === 0) {
+                noResults.style.display = 'block';
+                resultsCount.style.display = 'none';
+                return;
             }
+            
+            // Display results count
+            resultsCount.textContent = `Found ${matchingProcessors.length} matching processor${matchingProcessors.length > 1 ? 's' : ''}`;
+            resultsCount.style.display = 'block';
+            noResults.style.display = 'none';
+            
+            // Create and display tables for each matching processor
+            matchingProcessors.forEach(processor => {
+                // Create header with processor name
+                const header = document.createElement('div');
+                header.className = 'processor-header';
+                header.textContent = processor.Name || 'Unknown Processor';
+                
+                // Create table
+                const table = createProcessorTable(processor, searchTerm);
+                
+                // Add to results container
+                resultsContainer.appendChild(header);
+                resultsContainer.appendChild(table);
+            });
         }
 
         // Event listeners
@@ -258,22 +288,23 @@
             // Search button click
             searchButton.addEventListener('click', function() {
                 const searchTerm = searchInput.value.trim();
-                populateTable(jsonData, searchTerm);
+                searchProcessors(jsonData, searchTerm);
             });
             
             // Enter key press in search input
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     const searchTerm = searchInput.value.trim();
-                    populateTable(jsonData, searchTerm);
+                    searchProcessors(jsonData, searchTerm);
                 }
             });
             
             // Clear search results when input is cleared
             searchInput.addEventListener('input', function() {
                 if (this.value.trim() === '') {
-                    document.getElementById('dataTable').style.display = 'none';
+                    document.getElementById('resultsContainer').innerHTML = '';
                     document.getElementById('noResults').style.display = 'none';
+                    document.getElementById('resultsCount').style.display = 'none';
                 }
             });
         });
