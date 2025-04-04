@@ -136,7 +136,7 @@
 
     <script>
         const jsonData = loadJSON();
-        // In a real implementation, you would load the JSON from a file like this:
+        
         async function loadJSON() {
             try {
                 const response = await fetch('data_processors.json');
@@ -187,6 +187,9 @@
             
             if (searchTerm) {
                 // Only search in the context fields
+                console.log(searchTerm);
+                console.log(data);
+
                 for (const field of contextSearchFields) {
                     if (data[field] && data[field].toLowerCase().includes(searchTermLower)) {
                         contextMatch = true;
