@@ -110,6 +110,12 @@
             padding: 2px 0;
             font-weight: bold;
         }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
         @media (max-width: 768px) {
             th, td {
                 padding: 8px 10px;
@@ -134,6 +140,7 @@
             Search only looks in Name, Series, and Family fields
         </div>
         
+        <div id="loading" class="loading">Loading processor data...</div>
         <div id="resultsCount" class="results-count" style="display: none;"></div>
         <div id="noResults" class="no-results">No matching processors found.</div>
         
@@ -143,20 +150,6 @@
     </div>
 
     <script>
-        // Sample data - in a real implementation, this would be loaded from a file
-        const jsonData = loadJSON()
-        
-            async function loadJSON() {
-            try {
-                const response = await fetch('data_processors.json');
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('Error loading JSON:', error);
-                return [];
-            }
-        }
-        
         // List of fields to display in the results
         const displayFields = [
             "Name",
@@ -176,6 +169,24 @@
             "Series",
             "Family"
         ];
+
+        // Global variable to store loaded processor data
+        let processorData = [];
+
+        // Function to load JSON data
+        async function loadProcessorData() {
+            try {
+                const response = await fetch('data_processors.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load data');
+                }
+                processorData = await response.json();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error loading processor data:', error);
+                document.getElementById('loading').textContent = 'Error loading processor data. Please try again later.';
+            }
+        }
 
         function createProcessorTable(processor, searchTerm = '') {
             // Create table for a single processor
@@ -224,7 +235,7 @@
             return table;
         }
 
-        function searchProcessors(data, searchTerm = '') {
+        function searchProcessors(searchTerm = '') {
             const resultsContainer = document.getElementById('resultsContainer');
             const noResults = document.getElementById('noResults');
             const resultsCount = document.getElementById('resultsCount');
@@ -243,7 +254,7 @@
             const searchTermLower = searchTerm.toLowerCase();
             
             // Filter processors that match the search term in any context field
-            const matchingProcessors = data.filter(processor => {
+            const matchingProcessors = processorData.filter(processor => {
                 for (const field of contextSearchFields) {
                     if (processor[field] && processor[field].toString().toLowerCase().includes(searchTermLower)) {
                         return true;
@@ -285,17 +296,20 @@
             const searchButton = document.getElementById('searchButton');
             const searchInput = document.getElementById('searchInput');
             
+            // Load processor data when page loads
+            loadProcessorData();
+            
             // Search button click
             searchButton.addEventListener('click', function() {
                 const searchTerm = searchInput.value.trim();
-                searchProcessors(jsonData, searchTerm);
+                searchProcessors(searchTerm);
             });
             
             // Enter key press in search input
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     const searchTerm = searchInput.value.trim();
-                    searchProcessors(jsonData, searchTerm);
+                    searchProcessors(searchTerm);
                 }
             });
             
