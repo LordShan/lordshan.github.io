@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT Translation Cost Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141b3d;
+            --bg-card: #1a2247;
+            --accent-primary: #00d9ff;
+            --accent-secondary: #7c3aed;
+            --accent-tertiary: #ff6b9d;
+            --text-primary: #e8edf4;
+            --text-secondary: #9ca9be;
+            --border-color: #2a3454;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #0f1635 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .params-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="number"] {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+        }
+
+        .calc-table {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+        }
+
+        th {
+            padding: 1.25rem 1rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 217, 255, 0.03);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .total-row {
+            font-weight: 700;
+            background: linear-gradient(90deg, rgba(0, 217, 255, 0.05), rgba(124, 58, 237, 0.05)) !important;
+            border-top: 2px solid var(--accent-primary) !important;
+        }
+
+        .total-row td {
+            padding: 1.5rem 1rem;
+            font-size: 1.1rem;
+        }
+
+        .cost-cell {
+            color: var(--accent-tertiary);
+            font-weight: 700;
+        }
+
+        select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        select:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .api-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 0.5rem;
+        }
+
+        .badge-streaming {
+            background: rgba(0, 217, 255, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .badge-batch {
+            background: rgba(124, 58, 237, 0.15);
+            color: var(--accent-secondary);
+            border: 1px solid var(--accent-secondary);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .params-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: var(--text-secondary);
+            margin-left: 0.25rem;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GPT Translation Cost Calculator</h1>
+            <p class="subtitle">Interactive cost estimation</p>
+        </header>
+
+        <div class="params-panel">
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-primary);">Data Parameters</h2>
+            <div class="params-grid">
+                <div class="param-group">
+                    <label>Total Rows</label>
+                    <input type="number" id="totalRows" value="77818">
+                </div>
+                <div class="param-group">
+                    <label>LongProductName Symbols</label>
+                    <input type="number" id="longProductSymbols" value="6303312">
+                </div>
+                <div class="param-group">
+                    <label>MarketingText Symbols</label>
+                    <input type="number" id="marketingSymbols" value="110413278">
+                </div>
+                <div class="param-group">
+                    <label>BulletPointsTranslate Symbols</label>
+                    <input type="number" id="bulletsTranslateSymbols" value="8412914">
+                </div>
+                <div class="param-group">
+                    <label>BulletPointsGenerate Empty</label>
+                    <input type="number" id="bulletsEmpty" value="58551">
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-label">Total Tokens</div>
+                <div class="summary-value" id="totalTokens">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Cost</div>
+                <div class="summary-value cost-cell" id="totalCost">$0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">API Type</div>
+                <div class="summary-value" id="apiTypeDisplay" style="font-size: 1.5rem;">
+                    STREAMING
+                    <span class="api-type-badge badge-streaming">Real-time</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="calc-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type Content</th>
+                        <th>Symbols</th>
+                        <th>Tokens</th>
+                        <th>Cost $</th>
+                        <th>Model</th>
+                        <th>API Type</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Rows will be generated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Pricing data (per 1M tokens)
+        const pricing = {
+            'gpt-5.1': { input: 1.25, output: 10.00 },
+            'gpt-5-mini': { input: 0.25, output: 2.00 },
+            'gpt-5.1-nano': { input: 0.10, output: 0.80 }
+        };
+
+        const batchDiscount = 0.5;
+
+        // Prompt overhead tokens
+        const promptTokens = {
+            'LongProductName': 150,
+            'MarketingText': 200,
+            'BulletPointsTranslate': 180,
+            'BulletPointsGenerate': 250
+        };
+
+        // Output multipliers
+        const outputMultiplier = {
+            'LongProductName': 1.0,
+            'MarketingText': 1.0,
+            'BulletPointsTranslate': 1.0,
+            'BulletPointsGenerate': 1.2
+        };
+
+        // Content types configuration
+        const contentTypes = [
+            {
+                name: 'LongProductName',
+                getSymbols: () => parseInt(document.getElementById('longProductSymbols').value),
+                getRows: () => parseInt(document.getElementById('totalRows').value),
+                defaultModel: 'gpt-5.1',
+                defaultApiType: 'streaming'
+            },
+            {
+                name: 'MarketingText',
+                getSymbols: () => parseInt(document.getElementById('marketingSymbols').value),
+                getRows: () => parseInt(document.getElementById('totalRows').value),
+                defaultModel: 'gpt-5.1',
+                defaultApiType: 'streaming'
+            },
+            {
+                name: 'BulletPointsTranslate',
+                getSymbols: () => parseInt(document.getElementById('bulletsTranslateSymbols').value),
+                getRows: () => parseInt(document.getElementById('totalRows').value),
+                defaultModel: 'gpt-5.1',
+                defaultApiType: 'streaming'
+            },
+            {
+                name: 'BulletPointsGenerate',
+                getSymbols: () => {
+                    const totalRows = parseInt(document.getElementById('totalRows').value);
+                    const emptyCount = parseInt(document.getElementById('bulletsEmpty').value);
+                    const filledCount = totalRows - emptyCount;
+                    const bulletsTranslateSymbols = parseInt(document.getElementById('bulletsTranslateSymbols').value);
+                    const avgSymbols = filledCount > 0 ? bulletsTranslateSymbols / filledCount : 0;
+                    return avgSymbols * emptyCount;
+                },
+                getRows: () => parseInt(document.getElementById('bulletsEmpty').value),
+                defaultModel: 'gpt-5.1',
+                defaultApiType: 'streaming'
+            }
+        ];
+
+        function formatNumber(num) {
+            return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        function calculateCost(contentType, model, apiType) {
+            const symbols = contentType.getSymbols();
+            const rowCount = contentType.getRows();
+            const charsPerToken = 4; // Fixed value for calculation
+
+            const inputTokens = (symbols / charsPerToken) + (promptTokens[contentType.name] * rowCount);
+            const outputTokens = (symbols / charsPerToken) * outputMultiplier[contentType.name];
+            const totalTokens = inputTokens + outputTokens;
+
+            const discount = (apiType === 'batch' || apiType === 'background') ? batchDiscount : 1.0;
+            const inputCost = (inputTokens / 1_000_000) * pricing[model].input * discount;
+            const outputCost = (outputTokens / 1_000_000) * pricing[model].output * discount;
+            const totalCost = inputCost + outputCost;
+
+            return {
+                symbols,
+                tokens: totalTokens,
+                cost: totalCost
+            };
+        }
+
+        function createModelSelect(contentType) {
+            const select = document.createElement('select');
+            select.className = 'model-select';
+            
+            Object.keys(pricing).forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                if (model === contentType.defaultModel) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', updateTable);
+            return select;
+        }
+
+        function createApiTypeSelect(contentType) {
+            const select = document.createElement('select');
+            select.className = 'api-type-select';
+            
+            const apiTypes = [
+                { value: 'streaming', label: 'STREAMING' },
+                { value: 'background', label: 'BACKGROUND' },
+                { value: 'batch', label: 'BATCH' }
+            ];
+            
+            apiTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.value;
+                option.textContent = type.label;
+                if (type.value === contentType.defaultApiType) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', updateTable);
+            return select;
+        }
+
+        // Store current selections
+        const currentSelections = {};
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            // Save current selections before clearing
+            const existingSelects = tbody.querySelectorAll('select');
+            existingSelects.forEach(select => {
+                const key = select.getAttribute('data-content') || select.getAttribute('data-api');
+                const type = select.classList.contains('model-select') ? 'model' : 'api';
+                if (key) {
+                    if (!currentSelections[key]) currentSelections[key] = {};
+                    currentSelections[key][type] = select.value;
+                }
+            });
+
+            tbody.innerHTML = '';
+
+            let totalTokens = 0;
+            let totalCost = 0;
+
+            // Create data rows
+            contentTypes.forEach(contentType => {
+                const row = document.createElement('tr');
+                
+                // Get saved selections or defaults
+                const savedModel = currentSelections[contentType.name]?.model || contentType.defaultModel;
+                const savedApiType = currentSelections[contentType.name]?.api || contentType.defaultApiType;
+                
+                const calc = calculateCost(contentType, savedModel, savedApiType);
+
+                totalTokens += calc.tokens;
+                totalCost += calc.cost;
+
+                row.innerHTML = `
+                    <td><strong>${contentType.name}</strong></td>
+                    <td>${formatNumber(calc.symbols)}</td>
+                    <td>${formatNumber(calc.tokens)}</td>
+                    <td class="cost-cell">${formatCurrency(calc.cost)}</td>
+                    <td></td>
+                    <td></td>
+                `;
+
+                // Create and append selects with saved values
+                const modelSelect = createModelSelect(contentType);
+                modelSelect.value = savedModel;
+                modelSelect.setAttribute('data-content', contentType.name);
+                
+                const apiTypeSelect = createApiTypeSelect(contentType);
+                apiTypeSelect.value = savedApiType;
+                apiTypeSelect.setAttribute('data-api', contentType.name);
+
+                row.cells[4].appendChild(modelSelect);
+                row.cells[5].appendChild(apiTypeSelect);
+
+                tbody.appendChild(row);
+            });
+
+            // Create total row
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td><strong>TOTAL</strong></td>
+                <td>${formatNumber(contentTypes.reduce((sum, ct) => sum + ct.getSymbols(), 0))}</td>
+                <td>${formatNumber(totalTokens)}</td>
+                <td class="cost-cell">${formatCurrency(totalCost)}</td>
+                <td colspan="2"></td>
+            `;
+            tbody.appendChild(totalRow);
+
+            // Update summary cards
+            document.getElementById('totalTokens').textContent = formatNumber(totalTokens);
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+
+            // Update API type display (using the most common type)
+            const apiTypes = contentTypes.map(ct => currentSelections[ct.name]?.api || ct.defaultApiType);
+            const mostCommonApiType = apiTypes.reduce((a, b, i, arr) => 
+                arr.filter(v => v === a).length >= arr.filter(v => v === b).length ? a : b
+            );
+            
+            const apiDisplay = document.getElementById('apiTypeDisplay');
+            const isDiscounted = mostCommonApiType === 'batch' || mostCommonApiType === 'background';
+            const badgeText = mostCommonApiType === 'streaming' ? 'Real-time' : '50% OFF';
+            const badgeClass = mostCommonApiType === 'streaming' ? 'badge-streaming' : 'badge-batch';
+            
+            apiDisplay.innerHTML = `
+                ${mostCommonApiType.toUpperCase()}
+                <span class="api-type-badge ${badgeClass}">
+                    ${badgeText}
+                </span>
+            `;
+        }
+
+        // Add event listeners to input fields
+        document.getElementById('totalRows').addEventListener('input', updateTable);
+        document.getElementById('longProductSymbols').addEventListener('input', updateTable);
+        document.getElementById('marketingSymbols').addEventListener('input', updateTable);
+        document.getElementById('bulletsTranslateSymbols').addEventListener('input', updateTable);
+        document.getElementById('bulletsEmpty').addEventListener('input', updateTable);
+
+        // Initial render
+        updateTable();
+    </script>
+</body>
+</html>
